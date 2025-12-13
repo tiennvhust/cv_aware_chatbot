@@ -92,7 +92,7 @@ class CVOrchestrator:
         
         === INSTRUCTIONS ===
         1. If 'Key Facts' are present, cite the number of years explicitly.
-        2. Use the 'Experience Snippets' to provide evidence and examples.
+        2. Use the 'Experience and Projects Snippets' to provide evidence and examples.
         3. Keep the tone professional, confident, and concise.
         """
 
@@ -101,22 +101,3 @@ class CVOrchestrator:
             "system_prompt": system_prompt,
             "user_query": user_query
         }
-
-# --- USAGE EXAMPLE ---
-
-# 1. Setup (Run once at startup)
-# router = CVGuardrailRouter()
-# engine = CVRetrievalEngine()
-# bot = CVOrchestrator()
-
-# 2. Runtime
-# query = "Do you know Python?"
-# result = bot.handle_query(query)
-
-# if result['status'] == 'success':
-#     # Send to LLM
-#     llm_response = call_llama_api(result['system_prompt'], result['user_query'])
-#     print(llm_response)
-# else:
-#     # Return blocked message directly
-#     print(result['response'])
