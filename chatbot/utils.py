@@ -16,8 +16,10 @@ DATE_FMT_VARIANTS = ["%Y-%m-%d", "%Y-%m", "%Y/%m", "%Y"]
 
 def parse_date(s: str) -> datetime:
     s = s.strip()
-    if not s or s.lower() in ["present", "current", "now"]:
+    if s.lower() in ["present", "current", "now"]:
         return datetime.today()
+    elif not s or s.lower() in ["unknown", "n/a", "na"]:
+        return datetime(1900, 1, 1)  # represent unknown with a very old date
     for fmt in DATE_FMT_VARIANTS:
         try:
             return datetime.strptime(s, fmt)
