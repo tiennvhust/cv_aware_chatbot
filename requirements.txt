@@ -1,8 +1,1 @@
-streamlit
-sentence-transformers
-numpy
-python-dotenv
-requests
-torch --index-url https://download.pytorch.org/whl/cpu
-langchain
-langchain-groq
+cryptography
