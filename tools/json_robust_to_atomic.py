@@ -14,9 +14,14 @@ def load_data(path: str):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def generate_context_string(role, org, start, end):
+def generate_context_string(category, role, name, start, end):
     """Creates the human-readable string for the LLM"""
-    return f"During my time as {role} at {org} ({start} to {end})"
+    if category == 'project':
+        return f"In {category} \"{name}\", as the {role.lower()} ({start} to {end})"
+    elif category == 'education':
+        return f"During my {role.lower()} studies at {name} ({start} to {end})"
+    else:
+        return f"During my time as {role.lower()} at {name} ({start} to {end})"
 
 def convert_robust_to_atomic(cv_data):
     atomic_list = []
@@ -25,10 +30,13 @@ def convert_robust_to_atomic(cv_data):
     def process_block(block, category):
         # Normalize fields based on category (Education vs Experience)
         if category == 'education':
-            org = block.get('school', 'Unknown School')
+            name = block.get('school', 'Unknown School')
             role = f"{block.get('level', '')} in {block.get('field', '')}".strip()
+        elif category == 'project':
+            name = block.get('name', 'Unknown Project')
+            role = block.get('role', 'Contributor')
         else:
-            org = block.get('company', 'Unknown Company')
+            name = block.get('company', 'Unknown Company')
             role = block.get('title', 'Unknown Role')
 
         start_date = block.get('from', 'Unknown')
@@ -39,24 +47,24 @@ def convert_robust_to_atomic(cv_data):
         if not items:
             # Fallback if there are no bullet points (e.g., just a degree listing)
             items = [{
-                "details": f"Completed {role} at {org}.", 
+                "details": f"Completed {role} at {name}.", 
                 "skills": []
             }]
 
         for item in items:
-            chunk_id = f"{category[:3]}_{org[:3].lower().replace(' ', '')}_{str(uuid.uuid4())[:6]}"
+            chunk_id = f"{category[:3]}_{name[:3].lower().replace(' ', '')}_{str(uuid.uuid4())[:6]}"
             
             # Combine details for search
             text_content = item.get('details', '')
             
             # Generate the context string
-            context_str = generate_context_string(role, org, start_date, end_date)
+            context_str = generate_context_string(category, role, name, start_date, end_date)
             
             atomic_entry = {
                 "id": chunk_id,
                 "type": category, # Useful for filtering later
                 "role": role,
-                "organization": org,
+                "name": name,
                 "start_date": start_date, # Kept raw for Math Calculator
                 "end_date": end_date,     # Kept raw for Math Calculator
                 "text": text_content,
@@ -76,6 +84,11 @@ def convert_robust_to_atomic(cv_data):
     profile = cv_data.get('profile', {})
     for edu in profile.get('education', []):
         process_block(edu, 'education')
+
+    # --- 3. Process Projects ---
+    projects = cv_data.get('projects', [])
+    for proj in projects:
+        process_block(proj, 'project')
 
     return atomic_list
 

@@ -53,7 +53,7 @@ def format_atomic_data(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         frm = parse_date(block.get("start_date", ""))
         to = parse_date(block.get("end_date", ""))
         org_type = block.get("type", "")
-        organization = block.get("organization", "")
+        name = block.get("name", "")
         role = block.get("role", "")
         location = block.get("location", "")
         text = block.get("text", "")
@@ -62,7 +62,7 @@ def format_atomic_data(data: Dict[str, Any]) -> List[Dict[str, Any]]:
             "start_date": frm,
             "end_date": to,
             "type": org_type,
-            "organization": organization,
+            "name": name,
             "location": location,
             "role": role,
             "text": text,
@@ -78,7 +78,7 @@ def compute_skill_experience(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, 
             key = normalize_skill(sk)
             skill_data[key]["months"] += duration
             skill_data[key]["examples"].append({
-                "organization": r["organization"],
+                "name": r["name"],
                 "role": r["role"],
                 "location": r["location"],
                 "start_date": r["start_date"].strftime("%Y-%m"),
@@ -161,7 +161,7 @@ def answer_skill_familiarity(skill_list: List[str], skill_exp: Dict[str, Dict[st
             continue
         lines.append(f"- {sk}: {format_years(data['months'])} total. Examples:")
         for ex in data["examples"][:3]:
-            lines.append(f"  • {ex['role']} at {ex['organization']} ({ex['from']} → {ex['to']}), {ex['text']}")
+            lines.append(f"  • {ex['role']} at {ex['name']} ({ex['from']} → {ex['to']}), {ex['text']}")
     return "\n".join(lines)
 
 def answer_years_of_experience(rows: List[Dict[str, Any]]) -> str:
@@ -183,7 +183,7 @@ def answer_job_suitability(required_skills: List[str], skill_exp: Dict[str, Dict
         for m in fit["matched"]:
             lines.append(f"- {m['skill']}: {m['years']} (examples shown below)")
             for ex in m["examples"]:
-                lines.append(f"  • {ex['role']} at {ex['organization']} ({ex['from']} → {ex['to']}), {ex['text']}")
+                lines.append(f"  • {ex['role']} at {ex['name']} ({ex['from']} → {ex['to']}), {ex['text']}")
     if fit["missing"]:
         lines.append("Missing skills:")
         for g in fit["missing"]:
