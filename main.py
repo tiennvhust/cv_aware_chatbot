@@ -38,8 +38,8 @@ def main():
         raise FileNotFoundError("Could not load API key!")
 
     llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
-        temperature=0,
+        model="openai/gpt-oss-120b",
+        # temperature=0,
         api_key=API_KEY
     )
     
@@ -55,7 +55,7 @@ def main():
     chain = prompt | llm | StrOutputParser()
 
     # STREAMLIT UI
-    st.title("Candidate Profile Assistant")
+    st.title("Profile Assistant")
     st.markdown("Ask me about my skills, experience, or suitability for a role.")
 
     if "messages" not in st.session_state:

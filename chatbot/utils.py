@@ -201,3 +201,36 @@ def parse_user_input(s: str) -> Tuple[str, List[str]]:
         parts = [p.strip() for p in rest.split(",") if p.strip()]
         return prefix, parts
     return s.lower(), []
+
+def match_skills(skills_list, text):
+    """
+    Matches a list of skills in a text, handling special characters
+    (C++, C#, .NET) and punctuation.
+    """
+    if not text or not skills_list:
+        return []
+
+    # 1. Sort skills by length (descending)
+    # This ensures we match "C++" instead of just "C" inside "C++"
+    skills_list = sorted(skills_list, key=len, reverse=True)
+
+    # 2. Escape special regex characters in skills (e.g., +, ., #)
+    # "C++" becomes "C\+\+"
+    escaped_skills = [re.escape(skill) for skill in skills_list]
+
+    # 3. Create the Regex Pattern
+    # (?<!\w) : Negative Lookbehind - ensures start is not a word char
+    # |       : OR operator to join all skills
+    # (?!\w)  : Negative Lookahead - ensures end is not a word char
+    pattern = r"(?<!\w)(" + "|".join(escaped_skills) + r")(?!\w)"
+
+    # 4. Find matches
+    # flags=re.IGNORECASE allows matching "python" with "Python"
+    matches = re.findall(pattern, text, flags=re.IGNORECASE)
+
+    # 5. Return unique matches (canonicalizing case)
+    # This maps the found text (e.g., 'c++') back to your list format ('C++')
+    skill_map = {s.lower(): s for s in skills_list}
+    unique_matches = set(skill_map[m.lower()] for m in matches if m.lower() in skill_map)
+
+    return list(unique_matches)

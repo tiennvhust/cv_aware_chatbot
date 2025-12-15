@@ -63,7 +63,7 @@ class CVOrchestrator:
 
         # --- PHASE 3: RETRIEVAL (The Semantic Search) ---
         # We fetch text chunks based on the query
-        search_results = self.retriever.search(user_query)
+        search_results = self.retriever.search(user_query, route_result['intent'], top_k=5)
         
         # --- PHASE 4: PROMPT ASSEMBLY ---
         # If no results found and no skills detected, we might need a fallback
@@ -76,6 +76,8 @@ class CVOrchestrator:
         # Format the context
         context_text = "\n".join([f"- [{r['context']}]: {r['content']}" for r in search_results])
         facts_text = "\n".join(quantitative_facts) if quantitative_facts else "No specific quantitative data for this query."
+
+        print(context_text)
         
         # Final System Prompt
         system_prompt = f"""
@@ -91,9 +93,12 @@ class CVOrchestrator:
         {context_text}
         
         === INSTRUCTIONS ===
-        1. If 'Key Facts' are present, cite the number of years explicitly.
-        2. Use the 'Experience and Projects Snippets' to provide evidence and examples.
-        3. Keep the tone professional, confident, and concise.
+        1. Be accurate and base your answers ONLY on the provided context.
+        2. If 'Key Facts' are present, cite the number of years explicitly.
+        3. Use the 'Experience and Projects Snippets' to provide evidence and examples.
+        4. If the context does not contain the answer, respond with "I couldn't find specific details about that in the CV."
+        5. Do not fabricate information or make assumptions beyond the given data.
+        6. Maintain a professional and concise tone.
         """
 
         return {

@@ -9,7 +9,7 @@ Created on Fri Dec 12 20:07:49 2025
 import json
 import numpy as np
 import argparse
-from chatbot.utils import load_data
+from chatbot.utils import load_data, match_skills
 from sentence_transformers import SentenceTransformer, util
 
 class CVRetrievalEngine:
@@ -35,31 +35,37 @@ class CVRetrievalEngine:
                 
         print(f"Engine ready. Loaded {len(self.corpus)} facts and {len(self.all_known_skills)} unique skills.")
 
-    def search(self, user_query, top_k=3):
+    def intent_matching(self, user_query, user_intent):
+        print(f"🔍 [Search] Intent: {user_intent.capitalize()}")
+        candidate_indices = []
+        if user_intent == "skills":
+            detected_skills = match_skills(self.all_known_skills, user_query.lower())
+            if detected_skills:
+                print(f"   [Filter] Detected specific skills: {detected_skills}")
+                # Only keep documents that contain AT LEAST ONE of the detected skills
+                for idx, doc in enumerate(self.corpus):
+                    # Check intersection between doc skills and detected skills
+                    if any(s in doc['skills'] for s in detected_skills):
+                        candidate_indices.append(idx)
+            else:
+                print("   [Filter] No specific skills detected in query. Using full corpus.")
+                candidate_indices = list(range(len(self.corpus)))
+        elif user_intent in ["experience", "education", "projects"]:
+            candidate_indices = [idx for idx, doc in enumerate(self.corpus) if doc['type'] == user_intent]
+        elif user_intent in ["contact"]:
+            candidate_indices = []
+        else:
+            candidate_indices = list(range(len(self.corpus)))
+        return candidate_indices
+
+    def search(self, user_query, user_intent, top_k=3):
         """
         Hybrid Search:
         1. Identify skills in query -> Filter corpus (Indices).
         2. Semantic Search on filtered indices -> Rank results.
         """
-        query_lower = user_query.lower()
-        
-        # --- Step 1: The "Filter" Step ---
-        # Find which skills from our DB appear in the user's query
-        detected_skills = [s for s in self.all_known_skills if s in query_lower]
-        
-        candidate_indices = []
-        
-        if detected_skills:
-            print(f"   [Filter] Detected specific skills: {detected_skills}")
-            # Only keep documents that contain AT LEAST ONE of the detected skills
-            for idx, doc in enumerate(self.corpus):
-                # Check intersection between doc skills and detected skills
-                if any(s in doc['skills'] for s in detected_skills):
-                    candidate_indices.append(idx)
-        else:
-            print("   [Filter] No specific skills detected. Searching full CV.")
-            # If no specific skill asked, search everything
-            candidate_indices = list(range(len(self.corpus)))
+        # --- Step 1: Intent Matching & Filtering ---
+        candidate_indices = self.intent_matching(user_query=user_query, user_intent=user_intent)
 
         if not candidate_indices:
             return []
